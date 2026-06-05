@@ -108,7 +108,7 @@ workflows:
             - test-and-build
           filters:
             branches:
-              only: /^release.*/
+              only: staging
       - deploy-prod:
           requires:
             - test-and-build
