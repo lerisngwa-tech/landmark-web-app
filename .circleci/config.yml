@@ -46,7 +46,7 @@ jobs:
       - run:
           name: Deploy to Kubernetes (develop namespace)
           command: |
-            aws eks update-kubeconfig --name landmark-eks --region us-east-1
+            aws eks update-kubeconfig --name landmark-eks-cluster --region us-east-1
             sed -i 's/namespace: landmark/namespace: develop/g' k8s/*.yml
             sed -i "s|image: landmark-technologies:latest|image: $DOCKER_REPO:$IMAGE_TAG|g" k8s/app-deployment.yml
             kubectl apply -f k8s/
@@ -72,7 +72,7 @@ jobs:
       - run:
           name: Deploy to Kubernetes (staging namespace)
           command: |
-            aws eks update-kubeconfig --name landmark-eks --region us-east-1
+            aws eks update-kubeconfig --name landmark-eks-cluster --region us-east-1
             sed -i 's/namespace: landmark/namespace: staging/g' k8s/*.yml
             sed -i "s|image: landmark-technologies:latest|image: $DOCKER_REPO:$IMAGE_TAG|g" k8s/app-deployment.yml
             kubectl apply -f k8s/
@@ -98,7 +98,7 @@ jobs:
       - run:
           name: Deploy to Kubernetes (production namespace)
           command: |
-            aws eks update-kubeconfig --name landmark-eks --region us-east-1
+            aws eks update-kubeconfig --name landmark-eks-cluster --region us-east-1
             sed -i 's/namespace: landmark/namespace: production/g' k8s/*.yml
             sed -i "s|image: landmark-technologies:latest|image: $DOCKER_REPO:$IMAGE_TAG|g" k8s/app-deployment.yml
             kubectl apply -f k8s/
