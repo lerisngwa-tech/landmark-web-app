@@ -1,20 +1,7 @@
 version: 2.1
 
-commands:
-  build-and-push:
-    steps:
-      - checkout
-      - setup_remote_docker
-      - run:
-          name: Build and push Docker image
-          command: |
-            BRANCH=$(echo "$CIRCLE_BRANCH" | sed 's/\//-/g')
-            TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
-            IMAGE_TAG="${BRANCH}-${TIMESTAMP}"
-            echo "$DOCKERHUB_PASSWORD" | docker login --username $DOCKERHUB_USERNAME --password-stdin
-            docker build -t $DOCKER_REPO:$IMAGE_TAG .
-            docker push $DOCKER_REPO:$IMAGE_TAG
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
+environment: &env
+  DOCKER_REPO: lerisngwa/landmark-web-app
 
 jobs:
   test-and-build:
@@ -45,9 +32,20 @@ jobs:
     docker:
       - image: cimg/node:18.0
     environment:
-      DOCKER_REPO: lerisngwa/landmark-web-app
+      <<: *env
     steps:
-      - build-and-push
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and push Docker image
+          command: |
+            BRANCH=$(echo "$CIRCLE_BRANCH" | sed 's/\//-/g')
+            TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
+            IMAGE_TAG="${BRANCH}-${TIMESTAMP}"
+            echo "$DOCKERHUB_PASSWORD" | docker login --username $DOCKERHUB_USERNAME --password-stdin
+            docker build -t $DOCKER_REPO:$IMAGE_TAG .
+            docker push $DOCKER_REPO:$IMAGE_TAG
+            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
       - run:
           name: Deploy to Kubernetes (<< parameters.namespace >> namespace)
           command: |
