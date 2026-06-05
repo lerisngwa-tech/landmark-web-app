@@ -3,6 +3,20 @@ version: 2.1
 environment: &env
   DOCKER_REPO: lerisngwa/landmark-web-app
 
+commands:
+  build-and-push:
+    steps:
+      - run:
+          name: Build and push Docker image
+          command: |
+            BRANCH=$(echo "$CIRCLE_BRANCH" | sed 's/\//-/g')
+            TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
+            IMAGE_TAG="${BRANCH}-${TIMESTAMP}"
+            echo "$DOCKERHUB_PASSWORD" | docker login --username $DOCKERHUB_USERNAME --password-stdin
+            docker build -t $DOCKER_REPO:$IMAGE_TAG .
+            docker push $DOCKER_REPO:$IMAGE_TAG
+            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
+
 jobs:
   test-and-build:
     docker:
@@ -33,16 +47,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - run:
-          name: Build and push Docker image
-          command: |
-            BRANCH=$(echo "$CIRCLE_BRANCH" | sed 's/\//-/g')
-            TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
-            IMAGE_TAG="${BRANCH}-${TIMESTAMP}"
-            echo "$DOCKERHUB_PASSWORD" | docker login --username $DOCKERHUB_USERNAME --password-stdin
-            docker build -t $DOCKER_REPO:$IMAGE_TAG .
-            docker push $DOCKER_REPO:$IMAGE_TAG
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
+      - build-and-push
       - run:
           name: Deploy to Kubernetes (develop namespace)
           command: |
@@ -59,16 +64,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - run:
-          name: Build and push Docker image
-          command: |
-            BRANCH=$(echo "$CIRCLE_BRANCH" | sed 's/\//-/g')
-            TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
-            IMAGE_TAG="${BRANCH}-${TIMESTAMP}"
-            echo "$DOCKERHUB_PASSWORD" | docker login --username $DOCKERHUB_USERNAME --password-stdin
-            docker build -t $DOCKER_REPO:$IMAGE_TAG .
-            docker push $DOCKER_REPO:$IMAGE_TAG
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
+      - build-and-push
       - run:
           name: Deploy to Kubernetes (staging namespace)
           command: |
@@ -85,16 +81,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - run:
-          name: Build and push Docker image
-          command: |
-            BRANCH=$(echo "$CIRCLE_BRANCH" | sed 's/\//-/g')
-            TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
-            IMAGE_TAG="${BRANCH}-${TIMESTAMP}"
-            echo "$DOCKERHUB_PASSWORD" | docker login --username $DOCKERHUB_USERNAME --password-stdin
-            docker build -t $DOCKER_REPO:$IMAGE_TAG .
-            docker push $DOCKER_REPO:$IMAGE_TAG
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
+      - build-and-push
       - run:
           name: Deploy to Kubernetes (production namespace)
           command: |
