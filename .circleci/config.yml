@@ -1,5 +1,8 @@
 version: 2.1
 
+environment: &env
+  DOCKER_REPO: lerisngwa/landmark-web-app
+
 jobs:
   test-and-build:
     docker:
@@ -21,26 +24,14 @@ jobs:
       - run:
           name: Run server tests
           command: cd server && npm test
-      - setup_remote_docker
-      - run:
-          name: Docker build (validate)
-          command: |
-            BRANCH=$(echo "$CIRCLE_BRANCH" | sed 's/\//-/g')
-            TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
-            IMAGE_TAG="${BRANCH}-${TIMESTAMP}"
-            docker build -t chafah/landmark-web-app:$IMAGE_TAG .
 
   deploy-dev:
     docker:
       - image: cimg/node:18.0
+    environment:
+      <<: *env
     steps:
       - checkout
-      - run:
-          name: Install & test
-          command: |
-            npm ci
-            npm test
-            npm run build
       - setup_remote_docker
       - run:
           name: Build and push Docker image
@@ -48,29 +39,25 @@ jobs:
             BRANCH=$(echo "$CIRCLE_BRANCH" | sed 's/\//-/g')
             TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
             IMAGE_TAG="${BRANCH}-${TIMESTAMP}"
-            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
-            docker build -t $ECR_REGISTRY/chafah/landmark-web-app:$IMAGE_TAG .
-            docker push $ECR_REGISTRY/chafah/landmark-web-app:$IMAGE_TAG
+            echo "$DOCKERHUB_PASSWORD" | docker login --username $DOCKERHUB_USERNAME --password-stdin
+            docker build -t $DOCKER_REPO:$IMAGE_TAG .
+            docker push $DOCKER_REPO:$IMAGE_TAG
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
       - run:
           name: Deploy to Kubernetes (develop namespace)
           command: |
             aws eks update-kubeconfig --name landmark-eks --region us-east-1
             sed -i 's/namespace: landmark/namespace: develop/g' k8s/*.yml
-            sed -i "s|image: landmark-technologies:latest|image: $ECR_REGISTRY/chafah/landmark-web-app:$IMAGE_TAG|g" k8s/app-deployment.yml
+            sed -i "s|image: landmark-technologies:latest|image: $DOCKER_REPO:$IMAGE_TAG|g" k8s/app-deployment.yml
             kubectl apply -f k8s/
 
   deploy-stg:
     docker:
       - image: cimg/node:18.0
+    environment:
+      <<: *env
     steps:
       - checkout
-      - run:
-          name: Install & test
-          command: |
-            npm ci
-            npm test
-            npm run build
       - setup_remote_docker
       - run:
           name: Build and push Docker image
@@ -78,29 +65,25 @@ jobs:
             BRANCH=$(echo "$CIRCLE_BRANCH" | sed 's/\//-/g')
             TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
             IMAGE_TAG="${BRANCH}-${TIMESTAMP}"
-            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
-            docker build -t $ECR_REGISTRY/chafah/landmark-web-app:$IMAGE_TAG .
-            docker push $ECR_REGISTRY/chafah/landmark-web-app:$IMAGE_TAG
+            echo "$DOCKERHUB_PASSWORD" | docker login --username $DOCKERHUB_USERNAME --password-stdin
+            docker build -t $DOCKER_REPO:$IMAGE_TAG .
+            docker push $DOCKER_REPO:$IMAGE_TAG
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
       - run:
           name: Deploy to Kubernetes (staging namespace)
           command: |
             aws eks update-kubeconfig --name landmark-eks --region us-east-1
             sed -i 's/namespace: landmark/namespace: staging/g' k8s/*.yml
-            sed -i "s|image: landmark-technologies:latest|image: $ECR_REGISTRY/chafah/landmark-web-app:$IMAGE_TAG|g" k8s/app-deployment.yml
+            sed -i "s|image: landmark-technologies:latest|image: $DOCKER_REPO:$IMAGE_TAG|g" k8s/app-deployment.yml
             kubectl apply -f k8s/
 
   deploy-prod:
     docker:
       - image: cimg/node:18.0
+    environment:
+      <<: *env
     steps:
       - checkout
-      - run:
-          name: Install & test
-          command: |
-            npm ci
-            npm test
-            npm run build
       - setup_remote_docker
       - run:
           name: Build and push Docker image
@@ -108,40 +91,40 @@ jobs:
             BRANCH=$(echo "$CIRCLE_BRANCH" | sed 's/\//-/g')
             TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
             IMAGE_TAG="${BRANCH}-${TIMESTAMP}"
-            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
-            docker build -t $ECR_REGISTRY/chafah/landmark-web-app:$IMAGE_TAG .
-            docker push $ECR_REGISTRY/chafah/landmark-web-app:$IMAGE_TAG
+            echo "$DOCKERHUB_PASSWORD" | docker login --username $DOCKERHUB_USERNAME --password-stdin
+            docker build -t $DOCKER_REPO:$IMAGE_TAG .
+            docker push $DOCKER_REPO:$IMAGE_TAG
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
       - run:
           name: Deploy to Kubernetes (production namespace)
           command: |
             aws eks update-kubeconfig --name landmark-eks --region us-east-1
             sed -i 's/namespace: landmark/namespace: production/g' k8s/*.yml
-            sed -i "s|image: landmark-technologies:latest|image: $ECR_REGISTRY/chafah/landmark-web-app:$IMAGE_TAG|g" k8s/app-deployment.yml
+            sed -i "s|image: landmark-technologies:latest|image: $DOCKER_REPO:$IMAGE_TAG|g" k8s/app-deployment.yml
             kubectl apply -f k8s/
 
 workflows:
-  ci:
+  pipeline:
     jobs:
-      - test-and-build
-
-  deploy-to-dev:
-    jobs:
+      - test-and-build:
+          filters:
+            branches:
+              only: /.*/
       - deploy-dev:
+          requires:
+            - test-and-build
           filters:
             branches:
               only: develop
-
-  deploy-to-staging:
-    jobs:
       - deploy-stg:
+          requires:
+            - test-and-build
           filters:
             branches:
               only: /^release.*/
-
-  deploy-to-production:
-    jobs:
       - deploy-prod:
+          requires:
+            - test-and-build
           filters:
             branches:
               only:
