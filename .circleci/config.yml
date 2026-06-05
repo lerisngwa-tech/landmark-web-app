@@ -25,7 +25,10 @@ jobs:
           name: Run server tests
           command: cd server && npm test
 
-  deploy-dev:
+  deploy:
+    parameters:
+      namespace:
+        type: string
     docker:
       - image: cimg/node:18.0
     environment:
@@ -44,62 +47,10 @@ jobs:
             docker push $DOCKER_REPO:$IMAGE_TAG
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
       - run:
-          name: Deploy to Kubernetes (develop namespace)
+          name: Deploy to Kubernetes (<< parameters.namespace >> namespace)
           command: |
             aws eks update-kubeconfig --name landmark-eks-cluster --region us-east-1
-            sed -i 's/namespace: landmark/namespace: develop/g' k8s/*.yml
-            sed -i "s|image: landmark-technologies:latest|image: $DOCKER_REPO:$IMAGE_TAG|g" k8s/app-deployment.yml
-            kubectl apply -f k8s/
-
-  deploy-stg:
-    docker:
-      - image: cimg/node:18.0
-    environment:
-      <<: *env
-    steps:
-      - checkout
-      - setup_remote_docker
-      - run:
-          name: Build and push Docker image
-          command: |
-            BRANCH=$(echo "$CIRCLE_BRANCH" | sed 's/\//-/g')
-            TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
-            IMAGE_TAG="${BRANCH}-${TIMESTAMP}"
-            echo "$DOCKERHUB_PASSWORD" | docker login --username $DOCKERHUB_USERNAME --password-stdin
-            docker build -t $DOCKER_REPO:$IMAGE_TAG .
-            docker push $DOCKER_REPO:$IMAGE_TAG
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-      - run:
-          name: Deploy to Kubernetes (staging namespace)
-          command: |
-            aws eks update-kubeconfig --name landmark-eks-cluster --region us-east-1
-            sed -i 's/namespace: landmark/namespace: staging/g' k8s/*.yml
-            sed -i "s|image: landmark-technologies:latest|image: $DOCKER_REPO:$IMAGE_TAG|g" k8s/app-deployment.yml
-            kubectl apply -f k8s/
-
-  deploy-prod:
-    docker:
-      - image: cimg/node:18.0
-    environment:
-      <<: *env
-    steps:
-      - checkout
-      - setup_remote_docker
-      - run:
-          name: Build and push Docker image
-          command: |
-            BRANCH=$(echo "$CIRCLE_BRANCH" | sed 's/\//-/g')
-            TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
-            IMAGE_TAG="${BRANCH}-${TIMESTAMP}"
-            echo "$DOCKERHUB_PASSWORD" | docker login --username $DOCKERHUB_USERNAME --password-stdin
-            docker build -t $DOCKER_REPO:$IMAGE_TAG .
-            docker push $DOCKER_REPO:$IMAGE_TAG
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-      - run:
-          name: Deploy to Kubernetes (production namespace)
-          command: |
-            aws eks update-kubeconfig --name landmark-eks-cluster --region us-east-1
-            sed -i 's/namespace: landmark/namespace: production/g' k8s/*.yml
+            sed -i 's/namespace: landmark/namespace: << parameters.namespace >>/g' k8s/*.yml
             sed -i "s|image: landmark-technologies:latest|image: $DOCKER_REPO:$IMAGE_TAG|g" k8s/app-deployment.yml
             kubectl apply -f k8s/
 
@@ -110,19 +61,25 @@ workflows:
           filters:
             branches:
               only: /.*/
-      - deploy-dev:
+      - deploy:
+          name: deploy-dev
+          namespace: develop
           requires:
             - test-and-build
           filters:
             branches:
               only: develop
-      - deploy-stg:
+      - deploy:
+          name: deploy-stg
+          namespace: staging
           requires:
             - test-and-build
           filters:
             branches:
               only: /^release.*/
-      - deploy-prod:
+      - deploy:
+          name: deploy-prod
+          namespace: production
           requires:
             - test-and-build
           filters:
