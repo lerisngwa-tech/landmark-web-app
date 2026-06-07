@@ -26,7 +26,7 @@ jobs:
       - checkout
       - run:
           name: Install frontend dependencies
-          command: npm ci
+          command: npm install
       - run:
           name: Run frontend tests
           command: npm test
@@ -35,7 +35,7 @@ jobs:
           command: npm run build
       - run:
           name: Install server dependencies
-          command: cd server && npm ci
+          command: cd server && npm install
       - run:
           name: Run server tests
           command: cd server && npm test
