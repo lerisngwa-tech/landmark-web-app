@@ -46,7 +46,8 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - aws-cli/install
+      - aws-cli/setup:
+          aws-region: us-east-1
       - kubernetes/install-kubectl
       - build-and-push
       - run:
@@ -66,7 +67,8 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - aws-cli/install
+      - aws-cli/setup:
+          aws-region: us-east-1
       - kubernetes/install-kubectl
       - build-and-push
       - run:
@@ -86,7 +88,8 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - aws-cli/install
+      - aws-cli/setup:
+          aws-region: us-east-1
       - kubernetes/install-kubectl
       - build-and-push
       - run:
