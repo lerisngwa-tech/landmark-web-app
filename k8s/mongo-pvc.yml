@@ -4,6 +4,7 @@ metadata:
   name: mongo-pvc
   namespace: landmark
 spec:
+  storageClassName: gp2
   accessModes:
     - ReadWriteOnce
   resources:
