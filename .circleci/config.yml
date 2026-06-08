@@ -114,11 +114,9 @@ jobs:
             sed -i 's/name: landmark/name: production/g' k8s/namespace.yml
             kubectl apply -f k8s/namespace.yml --validate=false
             kubectl wait --for=jsonpath='{.status.phase}'=Active namespace/production --timeout=30s
-            sed -i 's/namespace: landmark/namespace: staging/g' k8s/*.yml
+            sed -i 's/namespace: landmark/namespace: production/g' k8s/*.yml
             sed -i "s|image: landmark-technologies:latest.*|image: lerisngwa/landmark-web-app:$IMAGE_TAG|g" k8s/app-deployment.yml
             kubectl apply -f k8s/ --validate=false
-
-workflows:
   build-and-deploy:
     jobs:
       - test-and-build:
