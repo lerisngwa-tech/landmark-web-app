@@ -12,9 +12,12 @@ commands:
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip -q awscliv2.zip
             sudo ./aws/install
+            unset AWS_DEFAULT_REGION
             aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
             aws configure set region us-east-1
+            echo "export AWS_DEFAULT_REGION=us-east-1" >> $BASH_ENV
+            echo "export AWS_REGION=us-east-1" >> $BASH_ENV
       - run:
           name: Verify AWS credentials
           command: |
