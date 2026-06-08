@@ -43,6 +43,8 @@ jobs:
   deploy-dev:
     docker:
       - image: cimg/node:18.0
+    environment:
+      AWS_DEFAULT_REGION: us-east-1
     steps:
       - checkout
       - setup_remote_docker
@@ -63,6 +65,8 @@ jobs:
   deploy-stg:
     docker:
       - image: cimg/node:18.0
+    environment:
+      AWS_DEFAULT_REGION: us-east-1
     steps:
       - checkout
       - setup_remote_docker
@@ -83,6 +87,8 @@ jobs:
   deploy-prod:
     docker:
       - image: cimg/node:18.0
+    environment:
+      AWS_DEFAULT_REGION: us-east-1
     steps:
       - checkout
       - setup_remote_docker
