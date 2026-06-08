@@ -70,6 +70,9 @@ jobs:
       - run:
           name: Deploy to Kubernetes (develop namespace)
           command: |
+            mkdir -p ~/.aws
+            printf "[default]\naws_access_key_id = %s\naws_secret_access_key = %s\n" "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" > ~/.aws/credentials
+            printf "[default]\nregion = us-east-1\noutput = json\n" > ~/.aws/config
             AWS_DEFAULT_REGION=us-east-1 aws eks update-kubeconfig --name landmark-eks-cluster --region us-east-1
             sed -i 's/name: landmark/name: develop/g' k8s/namespace.yml
             kubectl apply -f k8s/namespace.yml --validate=false
@@ -90,6 +93,9 @@ jobs:
       - run:
           name: Deploy to Kubernetes (staging namespace)
           command: |
+            mkdir -p ~/.aws
+            printf "[default]\naws_access_key_id = %s\naws_secret_access_key = %s\n" "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" > ~/.aws/credentials
+            printf "[default]\nregion = us-east-1\noutput = json\n" > ~/.aws/config
             AWS_DEFAULT_REGION=us-east-1 aws eks update-kubeconfig --name landmark-eks-cluster --region us-east-1
             sed -i 's/name: landmark/name: staging/g' k8s/namespace.yml
             kubectl apply -f k8s/namespace.yml --validate=false
@@ -110,6 +116,9 @@ jobs:
       - run:
           name: Deploy to Kubernetes (production namespace)
           command: |
+            mkdir -p ~/.aws
+            printf "[default]\naws_access_key_id = %s\naws_secret_access_key = %s\n" "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" > ~/.aws/credentials
+            printf "[default]\nregion = us-east-1\noutput = json\n" > ~/.aws/config
             AWS_DEFAULT_REGION=us-east-1 aws eks update-kubeconfig --name landmark-eks-cluster --region us-east-1
             sed -i 's/name: landmark/name: production/g' k8s/namespace.yml
             kubectl apply -f k8s/namespace.yml --validate=false
