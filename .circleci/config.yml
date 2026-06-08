@@ -117,6 +117,8 @@ jobs:
             sed -i 's/namespace: landmark/namespace: production/g' k8s/*.yml
             sed -i "s|image: landmark-technologies:latest.*|image: lerisngwa/landmark-web-app:$IMAGE_TAG|g" k8s/app-deployment.yml
             kubectl apply -f k8s/ --validate=false
+
+workflows:
   build-and-deploy:
     jobs:
       - test-and-build:
