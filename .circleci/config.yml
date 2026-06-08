@@ -12,17 +12,24 @@ commands:
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip -q awscliv2.zip
             sudo ./aws/install
-            unset AWS_DEFAULT_REGION
-            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-            aws configure set region us-east-1
-            echo "export AWS_DEFAULT_REGION=us-east-1" >> $BASH_ENV
-            echo "export AWS_REGION=us-east-1" >> $BASH_ENV
+      - run:
+          name: Configure AWS credentials
+          command: |
+            mkdir -p ~/.aws
+            cat > ~/.aws/credentials << EOF
+            [default]
+            aws_access_key_id = $AWS_ACCESS_KEY_ID
+            aws_secret_access_key = $AWS_SECRET_ACCESS_KEY
+            EOF
+            cat > ~/.aws/config << EOF
+            [default]
+            region = us-east-1
+            output = json
+            EOF
       - run:
           name: Verify AWS credentials
           command: |
-            echo "Region: $(aws configure get region)"
-            aws sts get-caller-identity
+            AWS_DEFAULT_REGION=us-east-1 AWS_REGION=us-east-1 aws sts get-caller-identity --region us-east-1
 
   build-and-push:
     steps:
@@ -71,7 +78,7 @@ jobs:
       - run:
           name: Deploy to Kubernetes (develop namespace)
           command: |
-            aws eks update-kubeconfig --name landmark-eks-cluster --region us-east-1
+            AWS_DEFAULT_REGION=us-east-1 aws eks update-kubeconfig --name landmark-eks-cluster --region us-east-1
             sed -i 's/name: landmark/name: develop/g' k8s/namespace.yml
             kubectl apply -f k8s/namespace.yml
             kubectl wait --for=jsonpath='{.status.phase}'=Active namespace/develop --timeout=30s
@@ -91,7 +98,7 @@ jobs:
       - run:
           name: Deploy to Kubernetes (staging namespace)
           command: |
-            aws eks update-kubeconfig --name landmark-eks-cluster --region us-east-1
+            AWS_DEFAULT_REGION=us-east-1 aws eks update-kubeconfig --name landmark-eks-cluster --region us-east-1
             sed -i 's/name: landmark/name: staging/g' k8s/namespace.yml
             kubectl apply -f k8s/namespace.yml
             kubectl wait --for=jsonpath='{.status.phase}'=Active namespace/staging --timeout=30s
@@ -111,7 +118,7 @@ jobs:
       - run:
           name: Deploy to Kubernetes (production namespace)
           command: |
-            aws eks update-kubeconfig --name landmark-eks-cluster --region us-east-1
+            AWS_DEFAULT_REGION=us-east-1 aws eks update-kubeconfig --name landmark-eks-cluster --region us-east-1
             sed -i 's/name: landmark/name: production/g' k8s/namespace.yml
             kubectl apply -f k8s/namespace.yml
             kubectl wait --for=jsonpath='{.status.phase}'=Active namespace/production --timeout=30s
