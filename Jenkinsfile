@@ -13,18 +13,18 @@ pipeline {
             steps { checkout scm }
         }
         stage('Install & Test') {
-            agent { docker { image 'node:18-alpine' } }
+            agent { docker { image 'node:18-alpine'; args '-v /var/lib/jenkins/.npm:/.npm' } }
             steps {
                 sh 'rm -rf node_modules server/node_modules'
-                sh 'npm install'
+                sh 'npm install --cache /.npm'
                 sh 'npm test -- --watchAll=false'
-                sh 'cd server && npm install && npm test'
+                sh 'cd server && npm install --cache /.npm && npm test'
             }
         }
         stage('Build Frontend') {
-            agent { docker { image 'node:18-alpine' } }
+            agent { docker { image 'node:18-alpine'; args '-v /var/lib/jenkins/.npm:/.npm' } }
             steps {
-                sh 'npm run build'
+                sh 'npm run build --cache /.npm'
             }
         }
         stage('Generate Image Tag') {
