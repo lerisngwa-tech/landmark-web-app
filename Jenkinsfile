@@ -5,6 +5,9 @@ pipeline {
         AWS_REGION = 'us-east-1'
         EKS_CLUSTER = 'landmark-eks-cluster'
     }
+    options {
+        skipDefaultCheckout(false)
+    }
     stages {
         stage('Checkout') {
             steps { checkout scm }
@@ -12,6 +15,7 @@ pipeline {
         stage('Install & Test') {
             agent { docker { image 'node:18-alpine' } }
             steps {
+                sh 'rm -rf node_modules server/node_modules'
                 sh 'npm install'
                 sh 'npm test -- --watchAll=false'
                 sh 'cd server && npm install && npm test'
@@ -19,7 +23,9 @@ pipeline {
         }
         stage('Build Frontend') {
             agent { docker { image 'node:18-alpine' } }
-            steps { sh 'npm run build' }
+            steps {
+                sh 'npm run build'
+            }
         }
         stage('Generate Image Tag') {
             steps {
