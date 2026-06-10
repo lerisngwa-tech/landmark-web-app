@@ -3,8 +3,8 @@ pipeline {
     environment {
         ECR_REGISTRY = credentials('ecr-registry')
         AWS_REGION = 'us-east-1'
-        EKS_CLUSTER = 'landmark-eks'
-        DOCKER_REPO = 'chafah/landmark-web-app'
+        EKS_CLUSTER = 'landmark-eks-cluster'
+        DOCKER_REPO = 'ierisngwa/landmark-web-app'
     }
     stages {
         stage('Checkout') {
