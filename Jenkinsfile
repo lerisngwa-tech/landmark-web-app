@@ -1,5 +1,7 @@
 pipeline {
     agent any
+    tools {
+        nodejs 'NodeJS-18'
     environment {
         ECR_REGISTRY = credentials('ecr-registry')
         AWS_REGION = 'us-east-1'
