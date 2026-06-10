@@ -10,13 +10,15 @@ pipeline {
             steps { checkout scm }
         }
         stage('Install & Test') {
+            agent { docker { image 'node:18-alpine' } }
             steps {
                 sh 'npm install'
-                sh 'npm test'
+                sh 'npm test -- --watchAll=false'
                 sh 'cd server && npm install && npm test'
             }
         }
         stage('Build Frontend') {
+            agent { docker { image 'node:18-alpine' } }
             steps { sh 'npm run build' }
         }
         stage('Generate Image Tag') {
