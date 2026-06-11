@@ -6,9 +6,13 @@ const { app, Student } = require('../index');
 let mongoServer;
 
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
+  mongoServer = await MongoMemoryServer.create({
+    binary: {
+      version: '6.0.11'
+    }
+  });
   await mongoose.connect(mongoServer.getUri());
-});
+}, 30000); // Increase timeout to 30s for the initial binary download
 
 afterAll(async () => {
   await mongoose.disconnect();
