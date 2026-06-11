@@ -19,7 +19,7 @@ pipeline {
                 sh 'npm ci'
                 sh 'npm test -- --watchAll=false'
                 dir('server') {
-                    sh 'npm install'
+                    sh 'npm ci'
                     sh 'npm test'
                 }
             }

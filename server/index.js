@@ -26,7 +26,8 @@ const Student = mongoose.model('Student', StudentSchema);
 
 app.post('/api/signup', async (req, res) => {
   try {
-    const student = await Student.create(req.body);
+    const { name, email, phone, course } = req.body;
+    const student = await Student.create({ name, email, phone, course });
     console.log(`New signup: ${student.name} - ${student.email} - ${student.course}`);
     res.status(201).json(student);
   } catch (err) {

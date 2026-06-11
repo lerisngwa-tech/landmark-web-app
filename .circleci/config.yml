@@ -32,7 +32,10 @@ jobs:
       - image: cimg/node:18.0
     steps:
       - checkout
-          -run:
+      - setup_remote_docker
+      - aws-cli/install
+      - kubernetes/install-kubectl
+      - run:
           name: Build and push Docker image
           command: |
             BRANCH=$(echo "$CIRCLE_BRANCH" | sed 's/\//-/g')
